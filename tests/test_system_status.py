@@ -54,20 +54,13 @@ class TestSystemHealthcheck(unittest.TestCase):
     _application_section_name = 'Application'
 
     def setUp(self):
-        if not 'HttpRequest' in features.providers:
-            features.Provide('HttpRequest', MockHttpRequests)
-
-        if not 'FileReader' in features.providers:
-            features.Provide('FileReader', MockFileOpen, data_to_return=self._mock_file_data)
-
-        if not 'HealthCheck' in features.providers:
-            features.Provide('HealthCheck', self._health_check)
-
-        if not 'EnvironmentDump' in features.providers:
-            features.Provide('EnvironmentDump', self._environment_dump)
-
-        if not 'ApplicationSectionName' in features.providers:
-            features.Provide('ApplicationSectionName', self._application_section_name)
+        # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
+        features.allowReplace = True
+        features.Provide('HttpRequest', MockHttpRequests)
+        features.Provide('FileReader', MockFileOpen, data_to_return=self._mock_file_data)
+        features.Provide('HealthCheck', self._health_check)
+        features.Provide('EnvironmentDump', self._environment_dump)
+        features.Provide('ApplicationSectionName', self._application_section_name)
 
     def test_check_url_returns_200_for_valid_page(self):
         url_to_check = 'http://unittesting.com'
