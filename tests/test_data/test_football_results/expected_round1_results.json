@@ -1,0 +1,32 @@
+{
+    "round": 1,
+    "results": [
+        {
+            "venue": "Venue 1",
+            "timeOfMatch": "Friday 13 April 2018, 7:30 PM",
+            "homeTeam": "Team 1",
+            "homeScore": 0,
+            "awayTeam": "Team 2",
+            "awayScore": 1,
+            "result": "Winner: Team 2"
+        },
+        {
+            "venue": "Venue 2",
+            "timeOfMatch": "Saturday 14 April 2018, 4:00 PM",
+            "homeTeam": "Team 3",
+            "homeScore": 6,
+            "awayTeam": "Team 4",
+            "awayScore": 2,
+            "result": "Winner: Team 3"
+        },
+        {
+            "venue": "Venue 3",
+            "timeOfMatch": "Sunday 15 April 2018, 2:30 PM",
+            "homeTeam": "Team 5",
+            "homeScore": 2,
+            "awayTeam": "Team 6",
+            "awayScore": 2,
+            "result": "Draw"
+        }
+    ]
+}

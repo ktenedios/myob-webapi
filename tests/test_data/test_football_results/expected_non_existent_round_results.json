@@ -1,0 +1,6 @@
+{
+    "invalidRoundSpecified": 9999,
+    "urlInvoked": "http://getresults.com?round=9999",
+    "httpCode": 404,
+    "errorMessage": "No page exists for round specified"
+}
