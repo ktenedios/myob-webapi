@@ -2,10 +2,10 @@ import json
 import os
 import unittest
 
-from app.football_results import FootballResults
+from app.football_results_parser import FootballResultsParser
 from app.inversion_of_control import features
 
-_test_path = os.path.join(os.path.dirname(__file__), 'test_data/test_football_results')
+_test_path = os.path.join(os.path.dirname(__file__), 'test_data/test_football_results_parser')
 
 class MockResponse():
     def __init__(self, status_code, content, url):
@@ -81,8 +81,8 @@ class TestFootballResults(unittest.TestCase):
         # will report 'ResurceWarning: unclosed file'
         with open(file=expected_data_file, mode='r') as file_reader:
             expected_data = json.load(file_reader)
-            football_results = FootballResults()
-            actual_data = football_results.get_scores_for_round(round_number)
+            football_results_parser = FootballResultsParser()
+            actual_data = football_results_parser.get_scores_for_round(round_number)
 
             self.assertIsNotNone(actual_data, 'An instantiated object should have been returned')
             self.assertIsInstance(actual_data, dict, 'A dictionary object should have been returned')

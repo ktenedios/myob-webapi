@@ -4,7 +4,7 @@ from lxml import html
 from app.inversion_of_control import (Component, HasMethods, IsInstanceOf,
                                       RequiredFeature)
 
-class FootballResults(Component):
+class FootballResultsParser(Component):
     _http_request = RequiredFeature('HttpRequest', HasMethods('get'))
     _http_get_scores_url_format = RequiredFeature('HttpGetScoresUrlFormat', IsInstanceOf(str))
     _xpath_get_teams = RequiredFeature('XpathGetTeams', IsInstanceOf(str))
