@@ -35,24 +35,24 @@ class FootballResults(Component):
         number_of_scores = len(scores)
         number_of_match_times = len(match_times)
         number_of_venues = len(venues)
+        error_message = ''
 
         # The number of teams and the number of scores should match.
         # The number of match times and the number of venues should match.
         # The number of teams should be twice the number of venues.
         if number_of_teams > number_of_scores:
-            return self._get_error_details_for_more_teams_than_scores(round_number, html_response)
+            error_message = 'More teams than scores were identified in urlInvoked'
+        elif number_of_teams < number_of_scores:
+            error_message = 'More scores than teams were identified in urlInvoked'
+        elif number_of_match_times > number_of_venues:
+            error_message = 'More match times than venues were identified in urlInvoked'
+        elif number_of_match_times < number_of_venues:
+            error_message = 'More venues than match times were identified in urlInvoked'
+        elif number_of_teams / number_of_venues != 2:
+            error_message = 'The number of teams and scores is not double that of the number of match times and venues'
 
-        if number_of_teams < number_of_scores:
-            return self._get_error_details_for_more_scores_than_teams(round_number, html_response)
-
-        if number_of_match_times > number_of_venues:
-            return self._get_error_details_for_more_match_times_than_venues(round_number, html_response)
-
-        if number_of_match_times < number_of_venues:
-            return self._get_error_details_for_more_venues_than_match_times(round_number, html_response)
-
-        if number_of_teams / number_of_venues != 2:
-            return self._get_error_details_for_number_of_teams_not_double_number_of_venues(round_number, html_response)
+        if len(error_message) > 0:
+            return self._get_error_details(round_number, html_response, error_message)
 
         results_dict['results'] = self._get_results(teams, venues, match_times, scores)
 
@@ -89,39 +89,11 @@ class FootballResults(Component):
 
         return results
 
-    def _get_error_details_for_more_teams_than_scores(self, round_number, http_response):
+    def _get_error_details(self, round_number, http_response, error_message):
         return {
             'round': round_number,
             'urlInvoked': http_response.url,
-            'errorMessage': 'More teams than scores were identified in urlInvoked'
-        }
-
-    def _get_error_details_for_more_scores_than_teams(self, round_number, http_response):
-        return {
-            'round': round_number,
-            'urlInvoked': http_response.url,
-            'errorMessage': 'More scores than teams were identified in urlInvoked'
-        }
-
-    def _get_error_details_for_more_match_times_than_venues(self, round_number, http_response):
-        return {
-            'round': round_number,
-            'urlInvoked': http_response.url,
-            'errorMessage': 'More match times than venues were identified in urlInvoked'
-        }
-
-    def _get_error_details_for_more_venues_than_match_times(self, round_number, http_response):
-        return {
-            'round': round_number,
-            'urlInvoked': http_response.url,
-            'errorMessage': 'More venues than match times were identified in urlInvoked'
-        }
-
-    def _get_error_details_for_number_of_teams_not_double_number_of_venues(self, round_number, http_response):
-        return {
-            'round': round_number,
-            'urlInvoked': http_response.url,
-            'errorMessage': 'The number of teams and scores is not double that of the number of match times and venues'
+            'errorMessage': error_message
         }
 
     def _get_error_details_for_not_found_page(self, round_number, html_response):

@@ -20,7 +20,6 @@ class MockHttpFootballRequests():
     _round4_url = 'http://getresults.com?round=4' # Poorly formatted HTML - more scores than teams
     _round5_url = 'http://getresults.com?round=5' # Poorly formatted HTML - more match times than venues
     _round6_url = 'http://getresults.com?round=6' # Poorly formatted HTML - more venues than match times
-    _round6_url = 'http://getresults.com?round=6' # Poorly formatted HTML - more venues than match times
     _round7_url = 'http://getresults.com?round=7' # Properly formatted HTML with invalid data - number of teams > number of match times * 2
     _round8_url = 'http://getresults.com?round=8' # Properly formatted HTML with invalid data - number of teams < number of match times * 2
     _non_existent_round_url = 'http://getresults.com?round=9999' # Page does not exist
