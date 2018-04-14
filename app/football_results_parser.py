@@ -4,9 +4,25 @@ from lxml import html
 from app.inversion_of_control import (Component, HasMethods, IsInstanceOf,
                                       RequiredFeature)
 
+def ignore_exception(IgnoreException=Exception, DefaultVal=None):
+    """ Decorator for ignoring exception from a function
+    e.g.   @ignore_exception(DivideByZero)
+    e.g.2. ignore_exception(DivideByZero)(Divide)(2/0)
+    Obtained from https://stackoverflow.com/questions/2262333/is-there-a-built-in-or-more-pythonic-way-to-try-to-parse-a-string-to-an-integer
+    """
+    def dec(function):
+        def _dec(*args, **kwargs):
+            try:
+                return function(*args, **kwargs)
+            except IgnoreException:
+                return DefaultVal
+        return _dec
+    return dec
+
 class FootballResultsParser(Component):
     _http_request = RequiredFeature('HttpRequest', HasMethods('get'))
-    _http_get_scores_url_format = RequiredFeature('HttpGetScoresUrlFormat', IsInstanceOf(str))
+    _http_get_scores_for_round_url_format = RequiredFeature('HttpGetScoresForRoundUrlFormat', IsInstanceOf(str))
+    _http_get_scores_for_season_url_format = RequiredFeature('HttpGetScoresForSeasonUrlFormat', IsInstanceOf(str))
     _xpath_get_teams = RequiredFeature('XpathGetTeams', IsInstanceOf(str))
     _xpath_get_scores = RequiredFeature('XpathGetScores', IsInstanceOf(str))
     _xpath_get_match_times = RequiredFeature('XpathGetMatchTimes', IsInstanceOf(str))
@@ -16,16 +32,26 @@ class FootballResultsParser(Component):
         pass
 
     def get_scores_for_round(self, round_number):
-        url = self._http_get_scores_url_format.format(round_number)
+        url = self._http_get_scores_for_round_url_format.format(round_number)
         html_response = self._http_request.get(url)
 
         if html_response.status_code == 200:
-            return self._get_scores_for_found_page(round_number, html_response)
+            return self._get_scores_for_found_page(html_response, round_number)
         else:
-            return self._get_error_details_for_not_found_page(round_number, html_response)
+            return self._get_error_details_for_not_found_page(html_response, round_number)
 
-    def _get_scores_for_found_page(self, round_number, html_response):
-        results_dict = {'round': round_number}
+    def get_scores_for_season(self):
+        url = self._http_get_scores_for_season_url_format
+        html_response = self._http_request.get(url)
+
+        if html_response.status_code == 200:
+            return self._get_scores_for_found_page(html_response)
+        else:
+            return self._get_error_details_for_not_found_page(html_response)
+
+    def _get_scores_for_found_page(self, html_response, round_number=''):
+        try_parse_int = ignore_exception(ValueError, 'All')(int)
+        results_dict = {'round': try_parse_int(round_number)}
         tree = html.fromstring(html_response.content)
         teams = tree.xpath(self._xpath_get_teams)
         scores = tree.xpath(self._xpath_get_scores)
@@ -90,15 +116,19 @@ class FootballResultsParser(Component):
         return results
 
     def _get_error_details(self, round_number, http_response, error_message):
+        try_parse_int = ignore_exception(ValueError, 'All')(int)
+
         return {
-            'round': round_number,
+            'round': try_parse_int(round_number),
             'urlInvoked': http_response.url,
             'errorMessage': error_message
         }
 
-    def _get_error_details_for_not_found_page(self, round_number, html_response):
+    def _get_error_details_for_not_found_page(self, html_response, round_number=''):
+        try_parse_int = ignore_exception(ValueError, 'All')(int)
+
         error_dict = {
-            'invalidRoundSpecified': round_number,
+            'invalidRoundSpecified': try_parse_int(round_number),
             'urlInvoked': html_response.url,
             'httpCode': html_response.status_code
         }

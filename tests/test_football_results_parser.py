@@ -6,6 +6,7 @@ from app.football_results_parser import FootballResultsParser
 from app.inversion_of_control import features
 
 _test_path = os.path.join(os.path.dirname(__file__), 'test_data/test_football_results_parser')
+_full_season_url = 'http://getresults.com' # Properly formatted HTML with valid data
 
 class MockResponse():
     def __init__(self, status_code, content, url):
@@ -46,6 +47,8 @@ class MockHttpFootballRequests():
             html_file = os.path.join(_test_path, 'teams_more_than_double_of_venues.html')
         elif url == self._round8_url:
             html_file = os.path.join(_test_path, 'teams_less_than_double_of_venues.html')
+        elif url == _full_season_url:
+            html_file = os.path.join(_test_path, 'test_football_results_for_season.html')
         else:
             http_status_code = 404
             html_file = os.path.join(_test_path, 'file_not_found.html')
@@ -60,7 +63,8 @@ class TestFootballResults(unittest.TestCase):
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
         features.Provide('HttpRequest', MockHttpFootballRequests)
-        features.Provide('HttpGetScoresUrlFormat', 'http://getresults.com?round={0}')
+        features.Provide('HttpGetScoresForRoundUrlFormat', 'http://getresults.com?round={0}')
+        features.Provide('HttpGetScoresForSeasonUrlFormat', _full_season_url)
         features.Provide('XpathGetTeams', '//div[@class="teamname"]/text()')
         features.Provide('XpathGetScores', '//div[@class="score"]/text()')
         features.Provide('XpathGetMatchTimes', '//div[@class="matchtime"]/text()')
@@ -83,6 +87,23 @@ class TestFootballResults(unittest.TestCase):
             expected_data = json.load(file_reader)
             football_results_parser = FootballResultsParser()
             actual_data = football_results_parser.get_scores_for_round(round_number)
+
+            self.assertIsNotNone(actual_data, 'An instantiated object should have been returned')
+            self.assertIsInstance(actual_data, dict, 'A dictionary object should have been returned')
+            self.assertDictEqual(expected_data, actual_data, 'The retrieved dictionary does not match with expected dictionary')
+
+    def test_get_scores_for_season(self):
+        # When comparing dictionaries, allow unit tests to display entire contents
+        self.maxDiff = None
+
+        expected_data_file = os.path.join(_test_path, 'expected_full_season_results.json')
+
+        # Using the with statement to open the file, otherwise the tests
+        # will report 'ResurceWarning: unclosed file'
+        with open(file=expected_data_file, mode='r') as file_reader:
+            expected_data = json.load(file_reader)
+            football_results_parser = FootballResultsParser()
+            actual_data = football_results_parser.get_scores_for_season()
 
             self.assertIsNotNone(actual_data, 'An instantiated object should have been returned')
             self.assertIsInstance(actual_data, dict, 'A dictionary object should have been returned')
