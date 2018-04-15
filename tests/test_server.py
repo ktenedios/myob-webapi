@@ -47,7 +47,6 @@ class TestFootballResultsServer(unittest.TestCase):
 
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
-        features.Provide('Application', self._application)
         features.Provide('Api', MockApi, application=self._application)
         features.Provide('SeasonResultsResource', lambda: MockFootballSeasonResultsResource)
         features.Provide('SeasonResultsEndpoint', '/season')
@@ -70,7 +69,7 @@ class TestFootballResultsServer(unittest.TestCase):
         # Pre-test verification
         self.assertIsNone(_resources, 'No resources should be present as FootballResultsServer was not instantiated')
         
-        FootballResultsServer()
+        FootballResultsServer(self._application)
         
         # Verify setup after initialization of FootballResultsServer instance
         self.assertEqual(len(expected_resources), len(_resources), \
@@ -91,7 +90,7 @@ class TestFootballResultsServer(unittest.TestCase):
                     'Resources set by FootballResultsServer is missing \'{0}\': \'{1}\''.format(expected_key, expected_value))
 
     def test_server_calls_application_run_method(self):
-        server = FootballResultsServer()
+        server = FootballResultsServer(self._application)
         server.start()
         self.assertTrue(self._application.get_run_invoked(), \
             'The start method of FootballResultsServer should have called the run method belonging to the injected application')
