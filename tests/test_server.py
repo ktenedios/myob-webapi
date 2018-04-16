@@ -1,109 +1,75 @@
 from unittest.mock import patch
 
 from flask import Flask
-from flask_restful import Resource
+from flask_restful import Api, Resource
 from flask_testing import TestCase
-from tests.mock_application import MockApplication
 
 from app.inversion_of_control import features
 from app.server import FootballResultsServer
 
-# Global variables for recording whether FootballResultsServer called
-# the constructor and the add_resource method of the dependency-injected Api object
-_resources = None
+# Global variable and functions to be used for API endpoint testing.
+# These are in place in a bid to prevent the following error when running multiple tests:
+# AssertionError: View function mapping is overwriting an existing endpoint function: mockfootballseasonresultsresource
+_server = None
 _application = None
 
-class MockApi():
-    def __init__(self, application):
-        global _application
-        global _resources
-        _application = application
-        _resources = []
+def get_server():
+    global _server
 
-    def add_resource(self, resource_class, endpoint):
-        _resources.append({
-            'resourceClass': resource_class.__name__,
-            'endpoint': endpoint
-        })
+    if _server is None:
+        _server = FootballResultsServer()
+
+    return _server
+
+def get_application(test_case):
+    global _application
+
+    if _application is None:
+        _application = Flask(__name__)
+        _application.config['TESTING'] = True
+
+        # The OS will pick the port that the application runs on.
+        # This avoids two instances on the same machine trying to use the same port.
+        _application.config['LIVESERVER_PORT'] = 0
+
+        # A lambda expression is used to return the application instance to the requestor.
+        # This is consistent with what has been implemented in ../app/wsgi.py.
+        features.Provide('Application', lambda: _application)
+        features.Provide('Api', Api, app=_application)
+        features.Provide('SeasonResultsResource', lambda: MockFootballSeasonResultsResource)
+        features.Provide('SeasonResultsEndpoint', '/season')
+        features.Provide('RoundResultsResource', lambda: MockFootballRoundResultsResource)
+        features.Provide('RoundResultsEndpoint', '/round/<round_number>')
+
+    return _application
 
 class MockFootballSeasonResultsResource(Resource):
     def __init__(self):
         pass
 
     def get(self):
-        return {'className': __name__}
+        return {'className': self.__class__.__name__}
 
 class MockFootballRoundResultsResource(Resource):
     def __init__(self):
         pass
 
     def get(self, round_number):
-        return {'className': __name__, 'roundNumber': round_number}
+        return {'className': self.__class__.__name__, 'roundNumber': int(round_number)}
 
 class TestFootballResultsServer(TestCase):
     _application = None
 
     def create_app(self):
-        self._application = Flask(__name__)
-        self._application.config['TESTING'] = True
-
-        # The OS will pick the port that the application runs on.
-        # This avoids two instances on the same machine trying to use the same port.
-        self._application.config['LIVESERVER_PORT'] = 0
+        self._application = get_application(self)
         return self._application
 
     def setUp(self):
-        # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
-        features.allowReplace = True
-
-        # A lambda expression is used to return the application instance to the requestor.
-        # This is consistent with what has been implemented in ../app/wsgi.py.
-        features.Provide('Application', lambda: self._application)
-        features.Provide('Api', MockApi, application=self._application)
-        features.Provide('SeasonResultsResource', lambda: MockFootballSeasonResultsResource)
-        features.Provide('SeasonResultsEndpoint', '/season')
-        features.Provide('RoundResultsResource', lambda: MockFootballRoundResultsResource)
-        features.Provide('RoundResultsEndpoint', '/round/<round_number>')
-
-    def test_server_adds_injected_resources(self):
-        # Expected state of resources held by instance of FootballResultsServer
-        expected_resources = [
-            {
-                'resourceClass': MockFootballRoundResultsResource.__name__,
-                'endpoint': '/round/<round_number>'
-            },
-            {
-                'resourceClass': MockFootballSeasonResultsResource.__name__,
-                'endpoint': '/season'
-            }
-        ]
-
-        # Pre-test verification
-        self.assertIsNone(_resources, 'No resources should be present as FootballResultsServer was not instantiated')
-        
-        FootballResultsServer()
-        
-        # Verify setup after initialization of FootballResultsServer instance
-        self.assertEqual(len(expected_resources), len(_resources), \
-            'The number of resoureces set by FootballResultsServer does not match with what is expected')
-
-        # The two lists consist of dictionaries, with the ordering of elements being different.
-        # Hence this loop evaluates that both lists have the same dictionary contents.
-        for expected in expected_resources:
-            for expected_key in expected.keys():
-                expected_value = expected[expected_key]
-                resource_exists_in_actual = False
-
-                for actual in _resources:
-                    if expected_key in actual.keys() and expected_value == actual[expected_key]:
-                        resource_exists_in_actual = True
-
-                self.assertTrue(resource_exists_in_actual, \
-                    'Resources set by FootballResultsServer is missing \'{0}\': \'{1}\''.format(expected_key, expected_value))
+        pass
 
     @patch.object(Flask, 'run')
     def test_server_calls_application_run_method(self, mock_flask_run):
-        server = FootballResultsServer()
+        server = get_server()
         server.start()
 
         # Validate that a Flask instance had its run method called once
@@ -113,3 +79,19 @@ class TestFootballResultsServer(TestCase):
         # As the run method is mocked through patching, the following error can be safely ignored:
         # [pylint] E1101:Method 'run' has no 'assert_called_once' member
         self._application.run.assert_called_once()
+
+    def test_season_endpoint_returns_expected_data(self):
+        get_server()
+        expected_dict = dict(className='MockFootballSeasonResultsResource')
+        response = self.client.get('/season')
+        self.assert200(response, 'HTTP 200 should have been returned for the season endpoint')
+        self.assertDictEqual(expected_dict, response.json, 'The retrieved dictionary does not match with what was expected')
+
+    def test_round_endpoint_returns_expected_data_with_round_number(self):
+        get_server()
+
+        for round_number in 1, 2, 3:
+            expected_dict = dict(className='MockFootballRoundResultsResource', roundNumber=round_number)
+            response = self.client.get('/round/{0}'.format(round_number))
+            self.assert200(response, 'HTTP 200 should have been returned for the round endpoint')
+            self.assertDictEqual(expected_dict, response.json, 'The retrieved dictionary does not match with what was expected')
