@@ -1,6 +1,8 @@
-import unittest
+from unittest.mock import patch
 
+from flask import Flask
 from flask_restful import Resource
+from flask_testing import TestCase
 from tests.mock_application import MockApplication
 
 from app.inversion_of_control import features
@@ -38,13 +40,19 @@ class MockFootballRoundResultsResource(Resource):
     def get(self, round_number):
         return {'className': __name__, 'roundNumber': round_number}
 
-class TestFootballResultsServer(unittest.TestCase):
-    _expected_application_name = 'mock_app_name'
+class TestFootballResultsServer(TestCase):
     _application = None
 
-    def setUp(self):
-        self._application = MockApplication(self._expected_application_name)
+    def create_app(self):
+        self._application = Flask(__name__)
+        self._application.config['TESTING'] = True
 
+        # The OS will pick the port that the application runs on.
+        # This avoids two instances on the same machine trying to use the same port.
+        self._application.config['LIVESERVER_PORT'] = 0
+        return self._application
+
+    def setUp(self):
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
 
@@ -93,8 +101,15 @@ class TestFootballResultsServer(unittest.TestCase):
                 self.assertTrue(resource_exists_in_actual, \
                     'Resources set by FootballResultsServer is missing \'{0}\': \'{1}\''.format(expected_key, expected_value))
 
-    def test_server_calls_application_run_method(self):
+    @patch.object(Flask, 'run')
+    def test_server_calls_application_run_method(self, mock_flask_run):
         server = FootballResultsServer()
         server.start()
-        self.assertTrue(self._application.get_run_invoked(), \
-            'The start method of FootballResultsServer should have called the run method belonging to the injected application')
+
+        # Validate that a Flask instance had its run method called once
+        mock_flask_run.assert_called_once()
+
+        # Validate that the Flask instance we are interested in had its run method called once.
+        # As the run method is mocked through patching, the following error can be safely ignored:
+        # [pylint] E1101:Method 'run' has no 'assert_called_once' member
+        self._application.run.assert_called_once()

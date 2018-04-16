@@ -1,4 +1,6 @@
-class MockApplication():
+from flask import Flask
+
+class MockApplication(Flask):
     _run_invoked = False
 
     def __init__(self, application_name):
