@@ -16,10 +16,10 @@ if __name__ == '__main__':
     app_data_file = os.path.join(os.path.dirname(__file__), 'application_information.json')
 
     # Create Flask object for hosting the application.
-    # This is the only dependency that is directly injected into an object,
-    # as it was not working using the inversion of control container (was receiving
-    # "TypeError: __call__() missing 2 required positional arguments: 'environ' and 'start_response'")
+    # Note that a lambda expression is used for returning the application instance,
+    # otherwise classes such as FootballResultServer will not be able to use the object.
     application = Flask('FootballResultsApi')
+    features.Provide('Application', lambda: application)
 
     # Dependencies for parsing football results from a HTML page
     features.Provide('HttpRequest', requests)
@@ -34,7 +34,8 @@ if __name__ == '__main__':
     features.Provide('FootballSeasonResultsParser', FootballResultsParser)
     features.Provide('FootballRoundResultsParser', FootballResultsParser)
 
-    # Dependencies required for running the RESTful server
+    # Dependencies required for running the RESTful server.
+    # Note that lambda expressions are used for returning the required class type for a resource.
     features.Provide('Api', Api, app=application)
     features.Provide('SeasonResultsResource', lambda: FootballSeasonResultsResource)
     features.Provide('SeasonResultsEndpoint', '/season')
@@ -48,5 +49,5 @@ if __name__ == '__main__':
     features.Provide('ApplicationSectionName', 'FootballResultsApi')
 
     # Moment of truth - instantiate the server and run the application
-    server = FootballResultsServer(application)
+    server = FootballResultsServer()
     server.start()
