@@ -1,1 +1,1 @@
-web: gunicorn "app:server.start()"
+web: gunicorn "app:start_server(False)"
