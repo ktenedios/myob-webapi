@@ -48,7 +48,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            nosetests --with-coverage --cover-html --cover-html-dir ./test-results --cover-erase --cover-package=app
+            nosetests --with-coverage --cover-html --cover-html-dir ./test-results --cover-erase --cover-package=app --verbose --with-xunit --xunit-file ./test-results/nosetests.xml
 
       - store_artifacts:
           path: test-results

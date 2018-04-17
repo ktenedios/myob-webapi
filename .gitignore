@@ -108,4 +108,4 @@ venv.bak/
 
 # Unit testing using nose and coverage
 .coverage
-.test-results/
+test-results/
