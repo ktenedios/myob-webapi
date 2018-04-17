@@ -7,11 +7,16 @@ from flask_testing import TestCase
 from app.inversion_of_control import features
 from app.server import FootballResultsServer
 
-# Global variable and functions to be used for API endpoint testing.
+# Variable (effectively a constant) for validating that the system status instance
+# is registered with the required URL to be checked
+_expected_url_to_check = 'https://system-status.com'
+
+# Global variables and functions to be used for API and health endpoint testing.
 # These are in place in a bid to prevent the following error when running multiple tests:
 # AssertionError: View function mapping is overwriting an existing endpoint function: mockfootballseasonresultsresource
 _server = None
 _application = None
+_injected_system_status = None
 
 def get_server():
     global _server
@@ -40,8 +45,13 @@ def get_application(test_case):
         features.Provide('SeasonResultsEndpoint', '/season')
         features.Provide('RoundResultsResource', lambda: MockFootballRoundResultsResource)
         features.Provide('RoundResultsEndpoint', '/round/<round_number>')
+        features.Provide('SystemStatus', MockSystemStatus, _expected_url_to_check)
 
     return _application
+
+def set_injected_system_status(system_status):
+    global _injected_system_status
+    _injected_system_status = system_status
 
 class MockFootballSeasonResultsResource(Resource):
     def __init__(self):
@@ -56,6 +66,14 @@ class MockFootballRoundResultsResource(Resource):
 
     def get(self, round_number):
         return {'className': self.__class__.__name__, 'roundNumber': int(round_number)}
+
+class MockSystemStatus(Resource):
+    def __init__(self, url_to_check):
+        self._url_to_check = url_to_check
+        set_injected_system_status(self)
+
+    def get_url_to_check(self):
+        return self._url_to_check
 
 class TestFootballResultsServer(TestCase):
     _application = None
@@ -79,6 +97,15 @@ class TestFootballResultsServer(TestCase):
         # As the run method is mocked through patching, the following error can be safely ignored:
         # [pylint] E1101:Method 'run' has no 'assert_called_once' member
         self._application.run.assert_called_once()
+
+    def test_system_status_injected_into_server(self):
+        get_server()
+        self.assertIsNotNone(_injected_system_status, 'A system status instance should have been injected into FootballResultsServer')
+        self.assertIsInstance(_injected_system_status, MockSystemStatus, 'Incorrect object type injected')
+
+        actual_url_to_check = _injected_system_status.get_url_to_check()
+        self.assertIsNotNone(actual_url_to_check, 'No URL was injected into the constructor of system status')
+        self.assertEqual(_expected_url_to_check, actual_url_to_check, 'The wrong URL was injected into the constructor of system status')
 
     def test_season_endpoint_returns_expected_data(self):
         get_server()

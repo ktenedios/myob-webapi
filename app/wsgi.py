@@ -10,8 +10,12 @@ from app.football_results_resource import (FootballRoundResultsResource,
                                            FootballSeasonResultsResource)
 from app.inversion_of_control import features
 from app.server import FootballResultsServer
+from app.system_status import SystemStatus
 
 if __name__ == '__main__':
+    # For health checking, the URL that gives all the results for the 2018 NPL Victoria season will be used
+    url_to_check = 'http://websites.sportstg.com/comp_info.cgi?a=ROUND&round=-1&client=0-10178-0-478257-0&pool=1'
+
     # Application data file used for environment dump REST endpoint
     app_data_file = os.path.join(os.path.dirname(__file__), 'application_information.json')
 
@@ -43,6 +47,7 @@ if __name__ == '__main__':
     features.Provide('RoundResultsEndpoint', '/round/<round_number>')
 
     # Dependencies required for reporting on health status and providing a system dump
+    features.Provide('SystemStatus', SystemStatus, url_to_check)
     features.Provide('FileReader', open, file=app_data_file, mode='r')
     features.Provide('HealthCheck', HealthCheck, app=application, path='/healthCheck')
     features.Provide('EnvironmentDump', EnvironmentDump, app=application, path='/environmentDump')
