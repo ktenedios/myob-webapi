@@ -18,12 +18,16 @@ class MockFootballResultsParser():
     def get_scores_for_season(self):
         return json.loads(_expected_json_for_season_results)
 
+def mock_pretty_json_renderer(dictionary):
+    return dictionary
+
 class TestFootballResultsResource(unittest.TestCase):
     def setUp(self):
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
         features.Provide('FootballSeasonResultsParser', MockFootballResultsParser)
         features.Provide('FootballRoundResultsParser', MockFootballResultsParser)
+        features.Provide('PrettyJson', lambda: mock_pretty_json_renderer)
 
     def test_get_season_results(self):
         resource = FootballSeasonResultsResource()

@@ -45,7 +45,9 @@ def get_application(test_case):
         features.Provide('SeasonResultsEndpoint', '/season')
         features.Provide('RoundResultsResource', lambda: MockFootballRoundResultsResource)
         features.Provide('RoundResultsEndpoint', '/round/<round_number>')
-        features.Provide('SystemStatus', MockSystemStatus, _expected_url_to_check)
+        features.Provide('SystemStatus', MockSystemStatus, _expected_url_to_check),
+        features.Provide('RootResource', lambda: MockRootEndpointResource)
+        features.Provide('RootEndpoint', '/')
 
     return _application
 
@@ -66,6 +68,13 @@ class MockFootballRoundResultsResource(Resource):
 
     def get(self, round_number):
         return {'className': self.__class__.__name__, 'roundNumber': int(round_number)}
+
+class MockRootEndpointResource(Resource):
+    def __init__(self):
+        pass
+
+    def get(self):
+        return {'mockingRootEndpoint': 'true'}
 
 class MockSystemStatus(Resource):
     def __init__(self, url_to_check):
