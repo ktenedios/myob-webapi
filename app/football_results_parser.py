@@ -85,6 +85,10 @@ class FootballResultsParser(Component):
         return results_dict
 
     def _get_results(self, teams, venues, match_times, scores):
+        # There is the possibility that some games do not have scores
+        # (e.g. postponed games), so convert non-integer values to None
+        try_parse_int = ignore_exception(ValueError, None)(int)
+
         team_index = 0
         match_time_index = 0
         results = []
@@ -96,12 +100,14 @@ class FootballResultsParser(Component):
                 'venue': venues[match_time_index],
                 'timeOfMatch': match_times[match_time_index],
                 'homeTeam': teams[team_index],
-                'homeScore': int(scores[team_index]),
+                'homeScore': try_parse_int(scores[team_index]),
                 'awayTeam': teams[team_index + 1],
-                'awayScore': int(scores[team_index + 1])
+                'awayScore': try_parse_int(scores[team_index + 1])
             }
 
-            if result['homeScore'] > result['awayScore']:
+            if result['homeScore'] is None or result['awayScore'] is None:
+                result['result'] = None
+            elif result['homeScore'] > result['awayScore']:
                 result['result'] = 'Winner: {0}'.format(result['homeTeam'])
             elif result['homeScore'] < result['awayScore']:
                 result['result'] = 'Winner: {0}'.format(result['awayTeam'])

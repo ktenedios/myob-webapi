@@ -23,6 +23,8 @@ class MockHttpFootballRequests():
     _round6_url = 'http://getresults.com?round=6' # Poorly formatted HTML - more venues than match times
     _round7_url = 'http://getresults.com?round=7' # Properly formatted HTML with invalid data - number of teams > number of match times * 2
     _round8_url = 'http://getresults.com?round=8' # Properly formatted HTML with invalid data - number of teams < number of match times * 2
+    _round9_url = 'http://getresults.com?round=9' # Properly formatted HTML with invalid data - missing score for a home team
+    _round10_url = 'http://getresults.com?round=10' # Properly formatted HTML with invalid data - missing score for an away team
     _non_existent_round_url = 'http://getresults.com?round=9999' # Page does not exist
 
     def __init__(self):
@@ -47,6 +49,10 @@ class MockHttpFootballRequests():
             html_file = os.path.join(_test_path, 'teams_more_than_double_of_venues.html')
         elif url == self._round8_url:
             html_file = os.path.join(_test_path, 'teams_less_than_double_of_venues.html')
+        elif url == self._round9_url:
+            html_file = os.path.join(_test_path, 'test_football_results_with_a_missing_home_score.html')
+        elif url == self._round10_url:
+            html_file = os.path.join(_test_path, 'test_football_results_with_a_missing_away_score.html')
         elif url == _full_season_url:
             html_file = os.path.join(_test_path, 'test_football_results_for_season.html')
         else:
@@ -78,6 +84,10 @@ class TestFootballResults(unittest.TestCase):
             expected_data_file = os.path.join(_test_path, 'expected_round{0}_results.json'.format(round_number))
         elif round_number in [3, 4, 5, 6, 7, 8] and expecting_error_output:
             expected_data_file = os.path.join(_test_path, 'expected_parsing_error_round{0}.json'.format(round_number))
+        elif round_number == 9 and not expecting_error_output:
+            expected_data_file = os.path.join(_test_path, 'expected_results_with_missing_home_team_score.json')
+        elif round_number == 10 and not expecting_error_output:
+            expected_data_file = os.path.join(_test_path, 'expected_results_with_missing_away_team_score.json')
         else:
             expected_data_file = os.path.join(_test_path, 'expected_non_existent_round_results.json')
 
@@ -135,3 +145,9 @@ class TestFootballResults(unittest.TestCase):
 
     def test_get_scores_returns_error_when_number_of_teams_is_less_than_double_number_of_venues(self):
         self._compare_expected_and_actual_round_results(round_number=8, expecting_error_output=True)
+
+    def test_get_scores_when_a_home_team_has_non_integer_score_value(self):
+        self._compare_expected_and_actual_round_results(round_number=9, expecting_error_output=False)
+
+    def test_get_scores_when_an_away_team_has_non_integer_score_value(self):
+        self._compare_expected_and_actual_round_results(round_number=10, expecting_error_output=False)
