@@ -111,4 +111,5 @@ venv.bak/
 test-results/
 code-coverage-results/
 circleci/
+xunit/
 
