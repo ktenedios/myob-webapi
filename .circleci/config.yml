@@ -62,8 +62,17 @@ jobs:
       - store_test_results:
           path: xunit
 
-deployment:
-  production:
-    branch: master
-    heroku:
-      appname: ktenedios-football-results-api
+      - run: bash .circleci/setup-heroku.sh
+
+      - add_ssh_keys:
+          fingerprints:
+            - "40:73:e4:e8:ef:e9:f2:f7:e3:3d:3e:eb:88:5d:be:14"
+
+      - deploy:
+          name: Deploy Master to Heroku
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              git push heroku master
+              heroku run python manage.py deploy
+              heroku restart
+            fi
