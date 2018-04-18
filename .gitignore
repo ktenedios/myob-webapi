@@ -106,6 +106,9 @@ venv.bak/
 # Visual Studio code
 .vscode/
 
-# Unit testing using nose and coverage
+# Unit testing using nose and coverage (mainly for CircleCI)
 .coverage
 test-results/
+code-coverage-results/
+circleci/
+
