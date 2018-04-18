@@ -62,8 +62,8 @@ jobs:
       - store_test_results:
           path: xunit
 
-  deployment:
-    production:
-      branch: master
-      heroku:
-        appname: ktenedios-football-results-api
+deployment:
+  production:
+    branch: master
+    heroku:
+      appname: ktenedios-football-results-api
