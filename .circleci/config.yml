@@ -48,13 +48,15 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            mkdir $CIRCLE_TEST_REPORTS/nosetests
-            nosetests --with-coverage --cover-html --cover-html-dir code-coverage-results --cover-erase --cover-package=app --verbose --with-xunit --xunit-file $CIRCLE_TEST_REPORTS/nosetests/test-results.xml
+            nosetests --with-coverage --cover-html --cover-html-dir code-coverage-results --cover-erase --cover-package=app --verbose --with-xunit --xunit-file test-results.xml
 
       - store_artifacts:
           path: code-coverage-results
           destination: test-results/code-coverage-results
 
       - store_artifacts:
-          path: $CIRCLE_TEST_REPORTS/nosetests/test-results.xml
-          destination: $CIRCLE_TEST_REPORTS/nosetests/test-results.xml
+          path: test-results.xml
+          destination: test-results/test-results.xml
+
+      - store_test_results:
+          path: test-results.xml
