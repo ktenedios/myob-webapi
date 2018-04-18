@@ -1,1 +1,1 @@
-web: gunicorn "app:start_server(False)"
+web: gunicorn "app:get_application()"

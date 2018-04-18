@@ -57,8 +57,7 @@ features.Provide('HealthCheck', HealthCheck, app=application, path='/healthCheck
 features.Provide('EnvironmentDump', EnvironmentDump, app=application, path='/environmentDump')
 features.Provide('ApplicationSectionName', 'FootballResultsApi')
 
-# Function that will create a FootballResultsServer instance.
-# This function exists to prevent unit tests from accidentally instantiating
-# a FootballResultsServer instance with the above dependencies already registered.
-def get_new_server_instance():
-    return FootballResultsServer()
+# Function that will create a FootballResultsServer instance and return the underlying application object
+def get_new_application_instance():
+    server = FootballResultsServer()
+    return server.get_application()

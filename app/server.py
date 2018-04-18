@@ -20,5 +20,5 @@ class FootballResultsServer():
         # Performing this assert as a means of ensuring that system status is instantiated
         assert self._system_status is not None
 
-    def start(self):
-        self._app.run()
+    def get_application(self):
+        return self._app

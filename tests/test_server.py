@@ -94,18 +94,13 @@ class TestFootballResultsServer(TestCase):
     def setUp(self):
         pass
 
-    @patch.object(Flask, 'run')
-    def test_server_calls_application_run_method(self, mock_flask_run):
+    @patch('flask.Flask')
+    def test_get_application_returns_expected_flask_application(self, mock_flask):
         server = get_server()
-        server.start()
+        flask_application = server.get_application()
 
-        # Validate that a Flask instance had its run method called once
-        mock_flask_run.assert_called_once()
-
-        # Validate that the Flask instance we are interested in had its run method called once.
-        # As the run method is mocked through patching, the following error can be safely ignored:
-        # [pylint] E1101:Method 'run' has no 'assert_called_once' member
-        self._application.run.assert_called_once()
+        # Validate that the application returned by the get_application method is the Flask application that was set up
+        self.assertEqual(self._application, flask_application, 'The get_application method returned the wrong Flask application instance')
 
     def test_system_status_injected_into_server(self):
         get_server()

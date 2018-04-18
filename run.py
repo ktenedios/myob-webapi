@@ -1,4 +1,5 @@
-from app import start_server
+from app import get_application
 
 if __name__ == '__main__':
-    start_server(running_unit_tests=False)
+    application = get_application()
+    application.run()
