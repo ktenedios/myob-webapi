@@ -76,10 +76,3 @@ jobs:
               heroku run python manage.py deploy
               heroku restart
             fi
-
-      - run:
-          name: Tag GitHub after successful deployment
-          command: |
-            TAG_NAME=releases/v${CIRCLE_BUILD_NUM}
-            git tag ${TAG_NAME}
-            git push origin ${TAG_NAME}
