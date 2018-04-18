@@ -64,6 +64,16 @@ class MockEnvironmentDump():
     def add_section(self, section_name, section_method):
         set_global_section_properties(section_name, section_method)
 
+class MockApplicationInformation():
+    def get_information(self):
+        return {
+            'app': {
+                'name': 'Unit Testing',
+                'mostRecentCommit': 'sha12345',
+                'tag': 'tag-v1'
+            }
+        }
+
 class TestSystemHealthcheck(unittest.TestCase):
     _application_section_name = 'Application'
     _application = MockApplication('TestSystemHealthcheck')
@@ -72,7 +82,7 @@ class TestSystemHealthcheck(unittest.TestCase):
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
         features.Provide('HttpRequest', MockHttpRequests)
-        features.Provide('ApplicationInformation', ApplicationInformation)
+        features.Provide('ApplicationInformation', MockApplicationInformation)
         features.Provide('HealthCheck', MockHealthCheck, app=self._application, path='/testHealthCheck')
         features.Provide('EnvironmentDump', MockEnvironmentDump, app=self._application, path='/testEnvironmentDump')
         features.Provide('ApplicationSectionName', self._application_section_name)
@@ -110,24 +120,21 @@ class TestSystemHealthcheck(unittest.TestCase):
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
+        self.assertEqual('Unit Testing', json_data['app'][key], 'Expecting \'Unit Testing\' to have been the value set to %s' % key)
 
     def test_get_application_data_contains_most_recent_commit_key_within_app(self):
         key = 'mostRecentCommit'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
+        self.assertEqual('sha12345', json_data['app'][key], 'Expecting \'sha12345\' to have been the value set to %s' % key)
 
-    def test_get_application_data_contains_commit_author_key_within_app(self):
-        key = 'commitAuthor'
+    def test_get_application_data_contains_tag_key_within_app(self):
+        key = 'tag'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
-
-    def test_get_application_data_contains_tags_key_within_app(self):
-        key = 'tags'
-        system_status = SystemStatus('http://someurl.com')
-        json_data = system_status.get_application_data()
-        self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
+        self.assertEqual('tag-v1', json_data['app'][key], 'Expecting \'tag-v1\' to have been the value set to %s' % key)
 
     def test_get_application_data_does_not_contain_bla_key_within_app(self):
         key = 'bla'

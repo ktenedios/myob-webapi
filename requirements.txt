@@ -11,3 +11,6 @@ gunicorn==19.7.1
 nose==1.3.7
 coverage==4.5.1
 Flask-Testing==0.7.1
+
+# Get latest commit and tag from GitHub
+PyGithub==1.39

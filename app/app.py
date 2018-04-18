@@ -18,6 +18,14 @@ from app.system_status import SystemStatus
 # For health checking, the URL that gives all the results for the 2018 NPL Victoria season will be used
 url_to_check = 'http://websites.sportstg.com/comp_info.cgi?a=ROUND&round=-1&client=0-10178-0-478257-0&pool=1'
 
+# Attempt to get Github token from environment variables.
+# If not found, set to empty string so that the environment dump endpoint does not fall over.
+token_name = 'GITHUB_TOKEN'
+token_value = ''
+
+if token_name in os.environ:
+    token_value = os.environ[token_name]
+
 # Create Flask object for hosting the application.
 # Note that a lambda expression is used for returning the application instance,
 # otherwise classes such as FootballResultServer will not be able to use the object.
@@ -54,6 +62,8 @@ features.Provide('ApplicationInformation', ApplicationInformation)
 features.Provide('HealthCheck', HealthCheck, app=application, path='/healthCheck')
 features.Provide('EnvironmentDump', EnvironmentDump, app=application, path='/environmentDump')
 features.Provide('ApplicationSectionName', 'FootballResultsApi')
+features.Provide('GithubToken', token_value)
+features.Provide('RepoName', 'myob-webapi')
 
 # Function that will create a FootballResultsServer instance and return the underlying application object
 def get_new_application_instance():

@@ -1,27 +1,36 @@
-import subprocess
+from github import Github, GithubException
+
+from app.inversion_of_control import IsInstanceOf, RequiredFeature
+
 
 class ApplicationInformation():
+    _github_token = RequiredFeature('GithubToken', IsInstanceOf(str))
+    _repo_name = RequiredFeature('RepoName', IsInstanceOf(str))
+
     def __init__(self):
-        self._git_revision_short_hash = \
-            self._get_git_property(['git', 'rev-parse', '--short', 'HEAD'])
+        if (self._github_token == ''):
+            self._git_revision = None
+            self._git_tag = None
+        else:
+            g = Github(self._github_token)
 
-        tags = self._get_git_property(['git', 'tag', '--list', '--contains', self._git_revision_short_hash])
-        self._git_tags = tags.split('\n')
+            for repo in g.get_user().get_repos():
+                if repo.name == self._repo_name:
+                    most_recent_commit = repo.get_commits()[0]
+                    self._git_revision = most_recent_commit.sha
 
-        authors = self._get_git_property(['git', 'log', '--format="%an <%ae>"', self._git_revision_short_hash])
-        self._git_commit_author = authors.split('\n')[0].replace('"', '')
+                    try:
+                        self._git_tag = repo.get_git_tag(self._git_revision)
+                    except GithubException:
+                        self._git_tag = None
 
-    def _get_git_property(self, git_params):
-        output = subprocess.check_output(git_params)
-        assert output is not None
-        return output.strip().decode('utf-8')
+                    break
 
     def get_information(self):
         return {
             'app': {
                 'name': 'NPL Victoria 2018 Football Results API',
-                'mostRecentCommit': self._git_revision_short_hash,
-                'commitAuthor': self._git_commit_author,
-                'tags': self._git_tags
+                'mostRecentCommit': self._git_revision,
+                'tag': self._git_tag
             }
         }
