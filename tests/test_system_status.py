@@ -1,7 +1,10 @@
 import unittest
+
+from tests.mock_application import MockApplication
+
+from app.application_information import ApplicationInformation
 from app.inversion_of_control import features
 from app.system_status import SystemStatus
-from tests.mock_application import MockApplication
 
 # Global variables and static methods for validating behaviours
 _health_check_method = None
@@ -47,13 +50,6 @@ class MockHttpRequests():
         # Caller is expecting an object to be returned that contains the attribute status_code
         return self
 
-class MockFileOpen():
-    def __init__(self, data_to_return):
-        self._data_to_return = data_to_return
-
-    def read(self):
-        return self._data_to_return
-
 class MockHealthCheck():
     def __init__(self, app, path):
         set_global_application_and_path_for_health_check(app, path)
@@ -69,7 +65,6 @@ class MockEnvironmentDump():
         set_global_section_properties(section_name, section_method)
 
 class TestSystemHealthcheck(unittest.TestCase):
-    _mock_file_data = '{"app": {"testcase": "Read JSON file", "author": "Unit Tester", "date": "Wed 10 Jan 2000", "commitsha": "abcd1234"}}'
     _application_section_name = 'Application'
     _application = MockApplication('TestSystemHealthcheck')
 
@@ -77,7 +72,7 @@ class TestSystemHealthcheck(unittest.TestCase):
         # Allow the dependencies to be replaced so as not to affect unit tests in other test classes
         features.allowReplace = True
         features.Provide('HttpRequest', MockHttpRequests)
-        features.Provide('FileReader', MockFileOpen, data_to_return=self._mock_file_data)
+        features.Provide('ApplicationInformation', ApplicationInformation)
         features.Provide('HealthCheck', MockHealthCheck, app=self._application, path='/testHealthCheck')
         features.Provide('EnvironmentDump', MockEnvironmentDump, app=self._application, path='/testEnvironmentDump')
         features.Provide('ApplicationSectionName', self._application_section_name)
@@ -110,33 +105,29 @@ class TestSystemHealthcheck(unittest.TestCase):
         json_data = system_status.get_application_data()
         self.assertEqual(False, key in json_data, 'Expecting %s to not have been in json_data' % key)
 
-    def test_get_application_data_contains_testcase_key_within_app(self):
-        key = 'testcase'
+    def test_get_application_data_contains_name_key_within_app(self):
+        key = 'name'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
-        self.assertEqual('Read JSON file', json_data['app'][key], 'json_data[\'app\'][\'%s\'] not returning expected string' % key)
 
-    def test_get_application_data_contains_author_key_within_app(self):
-        key = 'author'
+    def test_get_application_data_contains_most_recent_commit_key_within_app(self):
+        key = 'mostRecentCommit'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
-        self.assertEqual('Unit Tester', json_data['app'][key], 'json_data[\'app\'][\'%s\'] not returning expected string' % key)
 
-    def test_get_application_data_contains_date_key_within_app(self):
-        key = 'date'
+    def test_get_application_data_contains_commit_author_key_within_app(self):
+        key = 'commitAuthor'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
-        self.assertEqual('Wed 10 Jan 2000', json_data['app'][key], 'json_data[\'app\'][\'%s\'] not returning expected string' % key)
 
-    def test_get_application_data_contains_commitsha_key_within_app(self):
-        key = 'commitsha'
+    def test_get_application_data_contains_tags_key_within_app(self):
+        key = 'tags'
         system_status = SystemStatus('http://someurl.com')
         json_data = system_status.get_application_data()
         self.assertEqual(True, key in json_data['app'], 'Expecting %s to have been in json_data[\'app\']' % key)
-        self.assertEqual('abcd1234', json_data['app'][key], 'json_data[\'app\'][\'%s\'] not returning expected string' % key)
 
     def test_get_application_data_does_not_contain_bla_key_within_app(self):
         key = 'bla'

@@ -6,6 +6,7 @@ from flask_jsonpify import jsonify
 from flask_restful import Api
 from healthcheck import EnvironmentDump, HealthCheck
 
+from app.application_information import ApplicationInformation
 from app.football_results_parser import FootballResultsParser
 from app.football_results_resource import (FootballRoundResultsResource,
                                            FootballSeasonResultsResource,
@@ -16,9 +17,6 @@ from app.system_status import SystemStatus
 
 # For health checking, the URL that gives all the results for the 2018 NPL Victoria season will be used
 url_to_check = 'http://websites.sportstg.com/comp_info.cgi?a=ROUND&round=-1&client=0-10178-0-478257-0&pool=1'
-
-# Application data file used for environment dump REST endpoint
-app_data_file = os.path.join(os.path.dirname(__file__), 'application_information.json')
 
 # Create Flask object for hosting the application.
 # Note that a lambda expression is used for returning the application instance,
@@ -52,7 +50,7 @@ features.Provide('RootEndpoint', '/')
 
 # Dependencies required for reporting on health status and providing a system dump
 features.Provide('SystemStatus', SystemStatus, url_to_check)
-features.Provide('FileReader', open, file=app_data_file, mode='r')
+features.Provide('ApplicationInformation', ApplicationInformation)
 features.Provide('HealthCheck', HealthCheck, app=application, path='/healthCheck')
 features.Provide('EnvironmentDump', EnvironmentDump, app=application, path='/environmentDump')
 features.Provide('ApplicationSectionName', 'FootballResultsApi')
