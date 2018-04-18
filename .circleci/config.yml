@@ -76,3 +76,8 @@ jobs:
               heroku run python manage.py deploy
               heroku restart
             fi
+
+      - run:
+          name: Tag GitHub after successful deployment
+          command: |
+            git tag releases/v$CIRCLE_BUILD_NUM
