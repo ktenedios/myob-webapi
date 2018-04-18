@@ -80,4 +80,6 @@ jobs:
       - run:
           name: Tag GitHub after successful deployment
           command: |
-            git tag releases/v$CIRCLE_BUILD_NUM
+            TAG_NAME=releases/v${CIRCLE_BUILD_NUM}
+            git tag ${TAG_NAME}
+            git push origin ${TAG_NAME}
